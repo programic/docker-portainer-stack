@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+
+  agent:
+    image: portainer/agent:2.9.2
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.platform.os == linux ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+    networks:
+      - network
+
+  portainer:
+    image: portainer/portainer-ce:2.9.2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.role == manager ]
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - portainer-data:/data
+    networks:
+      - network
+
+networks:
+  network:
+    attachable: true
+
+volumes:
+  portainer-data:
